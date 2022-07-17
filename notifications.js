@@ -1,4 +1,4 @@
-const {getDb, getKey} = require('./db')
+const {getDb, getKey, post} = require('./db')
 const { v4 } = require('uuid')
 
 var AWS = require('aws-sdk');
@@ -64,6 +64,8 @@ const notifyInterestingAuctions = (buyer, interestingAuctions) => {
 
 const notifyEndOfAuction = async (_auction) => {
   const auction = await getKey('auctions', _auction.id)
+  const endedAuction = {...auction, status: 'ENDED'}
+  await post({[auction.id]: {endedAuction}})
 
   if (auction.status == 'CANCELED') return;
 
@@ -71,7 +73,7 @@ const notifyEndOfAuction = async (_auction) => {
     endpoint: auction.winningBid.buyer.ip + '/notification',
     body: {
       subject: 'WON_AUCTION',
-      auction
+      endedAuction
     },
   })
 
@@ -94,7 +96,7 @@ const notifyEndOfAuction = async (_auction) => {
       endpoint: buyer.ip + '/notification',
       body: {
         subject: 'END_OF_AUCTION',
-        auction
+        endedAuction
       },
     })
 
