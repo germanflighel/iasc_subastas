@@ -20,13 +20,10 @@ app.post('/buyers', async function(req, res) {
 
   await post('buyers', {[buyer.id]: buyer});
 
-  let auctions = await getDb(AUCTIONS);
-  // [{id: {}}]
-  auctions = auctions.map(auction => ({...Object.values(auction)[0], id: Object.keys(auction)[0]}))
-
+  const auctions = await getDb(AUCTIONS);
   const interestingAuctions = auctions.filter(auction => buyer.interests.some(interest => auction.tags.includes(interest)));
 
-  notifyInterestingAuctions(buyer, interestingAuctions)
+  if(interestingAuctions.length) notifyInterestingAuctions(buyer, interestingAuctions)
 
   res.json(buyer)
 });
@@ -35,10 +32,11 @@ app.post('/auctions', async function(req, res) {
   const auction = {...req.body, status: 'ONGOING', startTime: Date.now(), id: v4()};
   const endOfAuction = auction.duration * 60 * 1000
 
+  await post('auctions', {[auction.id]: auction})
+
   setTimeout(() => { notifyEndOfAuction(auction) }, endOfAuction);
 
   const buyers = await getDb('buyers')
-  console.log(buyers)
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
@@ -52,12 +50,10 @@ app.post('/auctions', async function(req, res) {
 app.post('/bids', async function(req, res) {
   const bid = {...req.body};
 
-  let auction = await getKey(AUCTIONS, auction.id)
-  // {id: {}}
-  auction = { ...Object.values(auction)[0], id: Object.keys(auction)[0] }
+  const auction = await getKey(AUCTIONS, bid.auctionId)
 
-  if (auction.winningPrice < bid.price) {
-    return res.status(400).json({'status': 'offer more pls'})
+  if (auction.winningPrice >= bid.price) {
+    return res.status(400).json({'status': 'bid is lower than winning offer'})
   }
 
   if (auction.status == 'CANCELED' || auction.status == 'ENDED') {
@@ -73,6 +69,8 @@ app.post('/bids', async function(req, res) {
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
   notifyBuyers('NEW_BID', interestedBuyers, auction);
+
+  res.json(bid);
 });
 
 app.post('/auction/:id/cancel', async function(req, res) {
@@ -89,6 +87,8 @@ app.post('/auction/:id/cancel', async function(req, res) {
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
   notifyBuyers('CANCELED_AUCTION', interestedBuyers, auction);
+
+  res.json(updatedAuction);
 });
 
 const scheduleEndOfAuction = (lostAuction) => {

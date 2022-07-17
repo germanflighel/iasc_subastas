@@ -12,6 +12,7 @@ AWS.config.update({
 
 const SQS_QUEUE_URL = 'http://localhost:4566/000000000000/notification-events.fifo'
 
+const AUCTIONS = 'auctions'
 
 var sqs = new AWS.SQS({apiVersion: '2012-11-05'});
 
@@ -44,13 +45,13 @@ const notifyBuyers = (subject, buyers, auction) => {
 }
 
 const notifyInterestingAuctions = (buyer, interestingAuctions) => {
-  const MessageBody = {
+  const MessageBody = JSON.stringify({
     endpoint: buyer.ip + '/notification',
     body: {
       subject: 'MATCHING_AUCTIONS',
       interestingAuctions
     },
-  }
+  })
 
   const params = {
     MessageBody,
@@ -64,13 +65,14 @@ const notifyInterestingAuctions = (buyer, interestingAuctions) => {
 
 const notifyEndOfAuction = async (_auction) => {
   const auction = await getKey('auctions', _auction.id)
-  const endedAuction = {...auction, status: 'ENDED'}
-  await post({[auction.id]: {endedAuction}})
 
-  if (auction.status == 'CANCELED') return;
+  if (auction.status == 'CANCELED' || auction.status == 'ENDED') return;
+
+  const endedAuction = {...auction, status: 'ENDED'}
+  await post(AUCTIONS, {[_auction.id]: endedAuction})
 
   const MessageBody = JSON.stringify({
-    endpoint: auction.winningBid.buyer.ip + '/notification',
+    endpoint: endedAuction.winningBid.buyer.ip + '/notification',
     body: {
       subject: 'WON_AUCTION',
       endedAuction
@@ -80,7 +82,7 @@ const notifyEndOfAuction = async (_auction) => {
   const params = {
     MessageBody,
     MessageDeduplicationId: v4(),
-    MessageGroupId: auction.winningBid.buyer.ip.ip,
+    MessageGroupId: auction.winningBid.buyer.ip,
     QueueUrl: SQS_QUEUE_URL
   };
 
