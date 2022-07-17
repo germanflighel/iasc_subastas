@@ -2,15 +2,15 @@ const express = require('express');
 const app = express();
 app.use(express.json())
 
+
 const {getDb, getKey, post} = require('./db')
+const { notifyBuyersOfNewAuction, notifyInterestingAuctions, notifyEndOfAuction } = require('./notifications')
 
 const { v4 } = require('uuid')
 
 const notifyBuyers = (buyers) => console.log(`Notifying ${buyers}`)
 
 const notifyEndOfAuction = (auction) => console.log(`Fetch the winner and losers and notify them with ${auction}`)
-
-const notifyInterestingAuctions = (buyer, auctions) => console.log(`Notifying ${buyer.name} of ${auctions.map(auction => auction.id)}`)
 
 const { io } = require("socket.io-client");
 const socket = io("http://localhost:3001");
@@ -46,7 +46,7 @@ app.post('/auctions', async function(req, res) {
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
-  notifyBuyers(interestedBuyers);
+  notifyBuyersOfNewAuction('NEW_AUCTION', interestedBuyers, auction);
 
   console.log(auction.id)
   socket.emit("new-auction", {id: auction.id, startTime: auction.startTime, duration: auction.duration})
@@ -62,7 +62,11 @@ app.post('/bids', async function(req, res) {
   auction = { ...Object.values(auction)[0], id: Object.keys(auction)[0] }
 
   if (auction.winningPrice < bid.price) {
-    return res.json({'status': 'offer more pls'})
+    return res.status(400).json({'status': 'offer more pls'})
+  }
+
+  if (auction.status == 'CANCELED' || auction.status == 'ENDED') {
+    return res.status(400).json({'status': 'auction no longer accepts bids'})
   }
 
   const updatedAuction = {...auction, winningBid: bid, winningPrice: bid.price}
@@ -73,7 +77,7 @@ app.post('/bids', async function(req, res) {
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
-  notifyBuyers(interestedBuyers);
+  notifyBuyers('NEW_BID', interestedBuyers, auction);
 });
 
 app.post('/auction/:id/cancel', async function(req, res) {
@@ -89,7 +93,7 @@ app.post('/auction/:id/cancel', async function(req, res) {
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
-  notifyBuyers(interestedBuyers);
+  notifyBuyers('CANCELED_AUCTION', interestedBuyers, auction);
 });
 
 const scheduleEndOfAuction = (lostAuction) => {
