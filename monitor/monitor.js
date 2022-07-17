@@ -29,7 +29,7 @@ io.on("connection", (socket) => {
   /*
    *  This looks likes it has a horrible race condition to me. 
    */
-  socket.on('get-orphan-auctions', (_, callback) => {
+  socket.on('get-orphan-auctions', async (_, callback) => {
     await subastasMutex.runExclusive(async () => {
       const orphans = auctions.filter(auction => auction.status == 'ORPHAN')
       if (orphans.length == 0) return
