@@ -22,7 +22,7 @@ const EXTRA_TIME = 5 * 1000
 app.post('/buyers', async function(req, res) {
   const buyer = {...req.body, id: v4()};
 
-  await post('buyers', buyer);
+  await post('buyers', {[buyer.id]: buyer});
 
   let auctions = await getDb(AUCTIONS);
   // [{id: {}}]
@@ -39,17 +39,17 @@ app.post('/auctions', async function(req, res) {
   const auction = {...req.body, status: 'ONGOING', startTime: Date.now(), id: v4()};
   const endOfAuction = auction.duration * 60 * 1000
 
-  const newAuction = await post(AUCTIONS, {[id]: auction});
-
   setTimeout(() => { notifyEndOfAuction(auction) }, endOfAuction);
 
   const buyers = await getDb('buyers')
+  console.log(buyers)
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
   notifyBuyers(interestedBuyers);
 
-  socket.emit('new-auction', newAuction.id)
+  console.log(auction.id)
+  socket.emit("new-auction", {id: auction.id, startTime: auction.startTime, duration: auction.duration})
 
   res.json(auction);
 });
@@ -94,6 +94,7 @@ app.post('/auction/:id/cancel', async function(req, res) {
 
 const scheduleEndOfAuction = (lostAuction) => {
   const newEndTime = (lostAuction.startTime + lostAuction.duration * 60 * 1000) - Date.now()
+  console.log(`Scheduling lost auction from ${lostAuction.startTime} to ${newEndTime}`)
   setTimeout(() => notifyEndOfAuction(lostAuction), newEndTime + EXTRA_TIME)
 }
 

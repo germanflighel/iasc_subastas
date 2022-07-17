@@ -18,12 +18,9 @@ const subastasMutex = new Mutex()
 const auctions = []
 
 io.on("connection", (socket) => {
-  
-  console.log(`Somembody connected to me with id: ${socket.id}, address: ${socket.handshake.address}`)
 
-  socket.on('new-auction', (id) => {
-    console.log(`${socket.id} has a new auction with id: ${id}`)
-    auctions.push({socketId: socket.id, id, status: 'ONGOING'})
+  socket.on("new-auction", (auction) => {
+    auctions.push({...auction, socketId: socket.id, status: 'ONGOING'})
   })
 
   /*
@@ -38,14 +35,18 @@ io.on("connection", (socket) => {
       auctions.forEach(auction => {
         if (auction.status == 'ORPHAN') {
           auction.status == 'ONGOING'
+          auction.startTime += 5 * 1000
         } 
       })
     })
   })
 
-  socket.on('disconnect', (reason) => {
-    console.log(`${socket.id} disconnected, its auctions have to be set as orphans and be reclaimed`)
-    auctions[socket.id].forEach(auction => auction.status = 'ORPHAN')
+  socket.on('disconnect', async (reason) => {
+    await subastasMutex.runExclusive(async () => {  
+      auctions.forEach(auction => {
+        if (auction.socketId == socket.id) auction.status = 'ORPHAN'
+      })
+    })
   })
 });
 

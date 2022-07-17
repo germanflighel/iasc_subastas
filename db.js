@@ -1,13 +1,11 @@
 const axios = require('axios');
 
-const url = 'localhost:4000'
+const url = 'http://localhost:8080'
 
 const post = (dbName, body) => {
   return axios
-    .post(`url/${dbName}`, body)
+    .post(`${url}/${dbName}`, body)
     .then(res => {
-      console.log(`statusCode: ${res.status}`);
-      console.log(res);
       return res.data;
     })
     .catch(error => {
@@ -17,10 +15,8 @@ const post = (dbName, body) => {
 
 const getKey = (dbName, key) => {
   return axios
-    .get(`url/${dbName}?key=${key}`)
+    .get(`${url}/${dbName}?key=${key}`)
     .then(res => {
-      console.log(`statusCode: ${res.status}`);
-      console.log(res);
       return res.data;
     })
     .catch(error => {
@@ -30,11 +26,13 @@ const getKey = (dbName, key) => {
 
 const getDb = (dbName) => {
   return axios
-    .get(`url/${dbName}`)
+    .get(`${url}/${dbName}`)
     .then(res => {
-      console.log(`statusCode: ${res.status}`);
-      console.log(res);
-      return res.data;
+      const keys = Object.keys(res.data)
+      const result = keys.map(key => {
+        return {id: key, ...res.data[key]}
+      })
+      return result;
     })
     .catch(error => {
       console.error(error);
