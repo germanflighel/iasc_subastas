@@ -4,13 +4,9 @@ app.use(express.json())
 
 
 const {getDb, getKey, post} = require('./db')
-const { notifyBuyersOfNewAuction, notifyInterestingAuctions, notifyEndOfAuction } = require('./notifications')
+const { notifyBuyers, notifyInterestingAuctions, notifyEndOfAuction } = require('./notifications')
 
 const { v4 } = require('uuid')
-
-const notifyBuyers = (buyers) => console.log(`Notifying ${buyers}`)
-
-const notifyEndOfAuction = (auction) => console.log(`Fetch the winner and losers and notify them with ${auction}`)
 
 const { io } = require("socket.io-client");
 const socket = io("http://localhost:3001");
@@ -46,9 +42,8 @@ app.post('/auctions', async function(req, res) {
 
   const interestedBuyers = buyers.filter(buyer => auction.tags.some(tag => buyer.interests.includes(tag)));
 
-  notifyBuyersOfNewAuction('NEW_AUCTION', interestedBuyers, auction);
+  notifyBuyers('NEW_AUCTION', interestedBuyers, auction);
 
-  console.log(auction.id)
   socket.emit("new-auction", {id: auction.id, startTime: auction.startTime, duration: auction.duration})
 
   res.json(auction);

@@ -4,6 +4,15 @@ const { v4 } = require('uuid')
 var AWS = require('aws-sdk');
 
 
+AWS.config.update({
+  region: "us-east-1",
+  accessKeyId: "test",
+  secretAccessKey: "test",
+});
+
+const SQS_QUEUE_URL = 'http://localhost:4566/000000000000/notification-events.fifo'
+
+
 var sqs = new AWS.SQS({apiVersion: '2012-11-05'});
 
 const sendMessage = (params) => sqs.sendMessage(params, function(err, data) {
@@ -14,19 +23,20 @@ const sendMessage = (params) => sqs.sendMessage(params, function(err, data) {
 
 const notifyBuyers = (subject, buyers, auction) => {
  buyers.forEach(buyer => {
-  const MessageBody = {
+  const MessageBody = JSON.stringify({
     endpoint: buyer.ip + '/notification',
     body: {
       subject,
       auction
-    },
-  }
+    }}
+  )
+  
 
   const params = {
     MessageBody,
     MessageDeduplicationId: v4(),
     MessageGroupId: buyer.ip,
-    QueueUrl: "SQS_QUEUE_URL"
+    QueueUrl: SQS_QUEUE_URL
   };
 
   sendMessage(params)
@@ -46,7 +56,7 @@ const notifyInterestingAuctions = (buyer, interestingAuctions) => {
     MessageBody,
     MessageDeduplicationId: v4(),
     MessageGroupId: buyer.ip,
-    QueueUrl: "SQS_QUEUE_URL"
+    QueueUrl: SQS_QUEUE_URL
   };
 
   sendMessage(params)
@@ -57,19 +67,19 @@ const notifyEndOfAuction = async (_auction) => {
 
   if (auction.status == 'CANCELED') return;
 
-  const MessageBody = {
+  const MessageBody = JSON.stringify({
     endpoint: auction.winningBid.buyer.ip + '/notification',
     body: {
       subject: 'WON_AUCTION',
       auction
     },
-  }
+  })
 
   const params = {
     MessageBody,
     MessageDeduplicationId: v4(),
     MessageGroupId: auction.winningBid.buyer.ip.ip,
-    QueueUrl: "SQS_QUEUE_URL"
+    QueueUrl: SQS_QUEUE_URL
   };
 
   sendMessage(params)
@@ -80,19 +90,19 @@ const notifyEndOfAuction = async (_auction) => {
 
 
   interestedBuyers.forEach(buyer => {
-    const MessageBody = {
+    const MessageBody = JSON.stringify({
       endpoint: buyer.ip + '/notification',
       body: {
         subject: 'END_OF_AUCTION',
         auction
       },
-    }
+    })
 
     const params = {
       MessageBody,
       MessageDeduplicationId: v4(),
       MessageGroupId: buyer.ip,
-      QueueUrl: "SQS_QUEUE_URL"
+      QueueUrl: SQS_QUEUE_URL
     };
 
     sendMessage(params)
