@@ -8,7 +8,7 @@ const { v4 } = require('uuid')
 
 const notifyBuyers = (buyers) => console.log(`Notifying ${buyers}`)
 
-const notifyEndOfAuction = (auction) => console.log(`Fetch the winners and loses and notify them with ${auction}`)
+const notifyEndOfAuction = (auction) => console.log(`Fetch the winner and losers and notify them with ${auction}`)
 
 const notifyInterestingAuctions = (buyer, auctions) => console.log(`Notifying ${buyer.name} of ${auctions.map(auction => auction.id)}`)
 
