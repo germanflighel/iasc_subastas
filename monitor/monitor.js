@@ -1,6 +1,7 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const Mutex = require('async-mutex').Mutex;
 
 const app = express();
 const httpServer = createServer(app);
@@ -9,6 +10,9 @@ const io = new Server(httpServer, {
     origin: "*"
   }
 });
+
+const subastasMutex = new Mutex()
+
 
 // { socket_id_1: [{id: 1, status: 'STATUS'}] }
 const auctions = []
@@ -26,14 +30,16 @@ io.on("connection", (socket) => {
    *  This looks likes it has a horrible race condition to me. 
    */
   socket.on('get-orphan-auctions', (_, callback) => {
-    const orphans = auctions.filter(auction => auction.status == 'ORPHAN')
-    if (orphans.length == 0) return
-    
-    callback(orphans)
-    auctions.forEach(auction => {
-      if (auction.status == 'ORPHAN') {
-        auction.status == 'ONGOING'
-      } 
+    await subastasMutex.runExclusive(async () => {
+      const orphans = auctions.filter(auction => auction.status == 'ORPHAN')
+      if (orphans.length == 0) return
+  
+      callback(orphans)
+      auctions.forEach(auction => {
+        if (auction.status == 'ORPHAN') {
+          auction.status == 'ONGOING'
+        } 
+      })
     })
   })
 
