@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const PORT = process.env.PORT
 app.use(express.json())
 
 
@@ -9,11 +10,14 @@ const { notifyBuyers, notifyInterestingAuctions, notifyEndOfAuction } = require(
 const { v4 } = require('uuid')
 
 const { io } = require("socket.io-client");
-const socket = io("http://host.docker.internal:3001");
+const MONITOR_URL = process.env.MONITOR_URL || "http://host.docker.internal:3001";
+const MONITOR_PORT = process.env.PORT || 3001
+const socket = io(`${MONITOR_URL}:${MONITOR_PORT}`);
 
 const AUCTIONS = 'auctions'
 const EXTRA_TIME = 5 * 1000
 
+app.get('/up', (req, res) => res.status(200).json({message: 'UP'}))
 
 app.post('/buyers', async function(req, res) {
   const buyer = {...req.body, id: v4()};
@@ -105,7 +109,7 @@ socket.on("connect", async () => {
   })
 });
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
   // Connect with sockets
-  console.log(`Subastas listening on 3000`);
+  console.log(`Subastas listening on ${PORT}`);
 });

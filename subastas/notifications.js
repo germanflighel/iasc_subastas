@@ -10,7 +10,7 @@ AWS.config.update({
   secretAccessKey: "test",
 });
 
-const SQS_QUEUE_URL = 'http://localhost:4566/000000000000/notification-events.fifo'
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL || 'http://localhost:4566/000000000000/notification-events.fifo'
 
 const AUCTIONS = 'auctions'
 
