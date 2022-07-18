@@ -1,6 +1,7 @@
 const { Consumer } = require("sqs-consumer");
 const AWS = require("aws-sdk");
 const axios = require("axios").default;
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL || "http://localhost:4566/000000000000/notification-events.fifo"
 
 AWS.config.update({
   region: "us-east-1",
@@ -9,7 +10,7 @@ AWS.config.update({
 });
 
 const app = Consumer.create({
-  queueUrl: "http://localhost:4566/000000000000/notification-events.fifo",
+  queueUrl: SQS_QUEUE_URL,
   handleMessage: async (message) => {
     const payload = JSON.parse(message.Body) || {};
     const { endpoint, body } = payload;
