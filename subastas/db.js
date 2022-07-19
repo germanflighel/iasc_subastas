@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const url = 'http://host.docker.internal:8080'
+const url = process.env.DB_URL || 'http://host.docker.internal:8080'
 
 const post = (dbName, body) => {
   return axios

@@ -12,6 +12,7 @@ const io = new Server(httpServer, {
 });
 
 const subastasMutex = new Mutex()
+const PORT = process.env.PORT || 3001
 
 
 // { socket_id_1: [{id: 1, status: 'STATUS'}] }
@@ -50,4 +51,4 @@ io.on("connection", (socket) => {
   })
 });
 
-httpServer.listen(3001, () => console.log("Monitor is up and runnning"));
+httpServer.listen(PORT, () => console.log("Monitor is up and runnning"));

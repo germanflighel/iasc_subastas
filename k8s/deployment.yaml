@@ -27,9 +27,10 @@ kind: Service
 metadata:
   name: subastas-service
 spec:
+  type: LoadBalancer
   selector:
     app: subastas
   ports:
     - protocol: TCP
-      port: 4000
+      port: 3000
       targetPort: 3000

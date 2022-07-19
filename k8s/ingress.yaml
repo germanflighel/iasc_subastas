@@ -8,7 +8,7 @@ metadata:
    
   annotations:
    
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    kubernetes.io/ingress.class: nginx
    
 spec:
    
@@ -31,5 +31,5 @@ spec:
                 name: subastas-service
    
                 port:
-   
-                  number: 4000
+
+                  number: 3000
