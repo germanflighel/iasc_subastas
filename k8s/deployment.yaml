@@ -26,6 +26,8 @@ spec:
            value: http://monitor-service
          - name: MONITOR_PORT
            value: "3001"
+         - name: DB_URL
+           value: http://raft-service:8080
 ---
 apiVersion: v1
 kind: Service
@@ -73,3 +75,26 @@ spec:
     - protocol: TCP
       port: 3001
       targetPort: 3001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer-deployment
+  labels:
+    app: consumer
+spec:
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: consumer
+        imagePullPolicy: "Never"
+        env:
+         - name: SQS_QUEUE_URL
+           value: http://localstack:4566/000000000000/notification-events.fifo
