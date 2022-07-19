@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subastas-deployment
+  labels:
+    app: subastas
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: subastas
+  template:
+    metadata:
+      labels:
+        app: subastas
+    spec:
+      containers:
+      - name: subastas
+        image: subastas
+        imagePullPolicy: "Never"
+        ports:
+        - containerPort: 3000
+        env:
+         - name: MONITOR_URL
+           value: http://monitor-service
+         - name: MONITOR_PORT
+           value: "3001"
+         - name: DB_URL
+           value: http://raft-service:8080
+         - name: SQS_QUEUE_URL
+           value: http://localstack-service:4566/000000000000/notification-events.fifo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subastas-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: subastas
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: subastas-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: subastas.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: subastas-service
+                port:
+                  number: 3000

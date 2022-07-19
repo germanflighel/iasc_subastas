@@ -1,0 +1,23 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer-deployment
+  labels:
+    app: consumer
+spec:
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: consumer
+        imagePullPolicy: "Never"
+        env:
+         - name: SQS_QUEUE_URL
+           value: http://localstack-service:4566/000000000000/notification-events.fifo

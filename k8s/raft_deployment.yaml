@@ -1,0 +1,211 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: raft1
+spec:
+  selector:
+    identity: raft-db-1
+  clusterIP: None
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  - port: 8090
+    targetPort: 8090
+    name: wss
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: raft2
+spec:
+  selector:
+    identity: raft-db-2
+  clusterIP: None
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  - port: 8090
+    targetPort: 8090
+    name: wss
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: raft3
+spec:
+  selector:
+    identity: raft-db-3
+  clusterIP: None
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  - port: 8090
+    targetPort: 8090
+    name: wss
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: raft4
+spec:
+  selector:
+    identity: raft-db-4
+  clusterIP: None
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  - port: 8090
+    targetPort: 8090
+    name: wss
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raft-db-deployment-1
+spec:
+  selector:
+    matchLabels:
+      app: raft-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: raft-db
+        identity: raft-db-1
+    spec:
+      containers:
+        - name: raft-db
+          image: iasc/raft-db
+          imagePullPolicy: Never
+          env:
+            - name: ADDRESS
+              value: tcp://raft1.default
+            - name: ADDRESSES
+              value: tcp://raft2.default,tcp://raft3.default,tcp://raft4.default
+          ports:
+            - containerPort: 8080
+            - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raft-db-deployment-2
+spec:
+  selector:
+    matchLabels:
+      app: raft-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: raft-db
+        identity: raft-db-2
+    spec:
+      containers:
+        - name: raft-db
+          image: iasc/raft-db
+          imagePullPolicy: Never
+          env:
+            - name: ADDRESS
+              value: tcp://raft2.default
+            - name: ADDRESSES
+              value: tcp://raft1.default,tcp://raft3.default,tcp://raft4.default
+          ports:
+            - containerPort: 8080
+            - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raft-db-deployment-3
+spec:
+  selector:
+    matchLabels:
+      app: raft-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: raft-db
+        identity: raft-db-3
+    spec:
+      containers:
+        - name: raft-db
+          image: iasc/raft-db
+          imagePullPolicy: Never
+          env:
+            - name: ADDRESS
+              value: tcp://raft3.default
+            - name: ADDRESSES
+              value: tcp://raft1.default,tcp://raft2.default,tcp://raft4.default
+          ports:
+            - containerPort: 8080
+            - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raft-db-deployment-4
+spec:
+  selector:
+    matchLabels:
+      app: raft-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: raft-db
+        identity: raft-db-4
+    spec:
+      containers:
+        - name: raft-db
+          image: iasc/raft-db
+          imagePullPolicy: Never
+          env:
+            - name: ADDRESS
+              value: tcp://raft4.default
+            - name: ADDRESSES
+              value: tcp://raft1.default,tcp://raft2.default,tcp://raft3.default
+          ports:
+            - containerPort: 8080
+            - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: raft-service
+spec:
+  selector:
+    app: raft-db
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
