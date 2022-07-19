@@ -5,7 +5,7 @@ docker compose -f localstack-docker-compose.yml up
 > Deberan instalar AWS CLI
 ## Crear queue
 ```
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name notification-events.fifo --attributes "FifoQueue=true
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name notification-events.fifo --attributes "FifoQueue=true"
 ```       
 ## Enviar mensaje
 ```

@@ -19,6 +19,10 @@ spec:
       - name: subastas
         image: subastas
         imagePullPolicy: "Never"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 500Mi
         ports:
         - containerPort: 3000
         env:
@@ -62,3 +66,16 @@ spec:
                 name: subastas-service
                 port:
                   number: 3000
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: subastas-autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: subastas-deployment
+  minReplicas: 3
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
