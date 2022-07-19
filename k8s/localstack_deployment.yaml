@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack-deployment
+  labels:
+    app: localstack
+spec:
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        app: localstack
+    spec:
+      containers:
+      - name: localstack
+        image: localstack/localstack:latest
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 4566
+        env:
+         - name: AWS_DEFAULT_REGION
+           value: us-east-1
+         - name: EDGE_PORT
+           value: "4566"
+         - name: SERVICES
+           value: sqs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack-service
+spec:
+  selector:
+    app: localstack
+  ports:
+    - protocol: TCP
+      port: 4566
+      targetPort: 4566

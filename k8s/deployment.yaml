@@ -28,6 +28,8 @@ spec:
            value: "3001"
          - name: DB_URL
            value: http://raft-service:8080
+         - name: SQS_QUEUE_URL
+           value: http://localstack-service:4566/000000000000/notification-events.fifo
 ---
 apiVersion: v1
 kind: Service
@@ -97,4 +99,4 @@ spec:
         imagePullPolicy: "Never"
         env:
          - name: SQS_QUEUE_URL
-           value: http://localstack:4566/000000000000/notification-events.fifo
+           value: http://localstack-service:4566/000000000000/notification-events.fifo
