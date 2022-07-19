@@ -12,6 +12,7 @@ const { v4 } = require('uuid')
 const { io } = require("socket.io-client");
 const MONITOR_URL = process.env.MONITOR_URL || "http://host.docker.internal:3001";
 const MONITOR_PORT = process.env.PORT || 3001
+console.log(`${MONITOR_URL}:${MONITOR_PORT}`)
 const socket = io(`${MONITOR_URL}:${MONITOR_PORT}`);
 
 const AUCTIONS = 'auctions'
