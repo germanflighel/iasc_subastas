@@ -15,14 +15,19 @@ El uso de la cola de mensajes agrega resiliencia a este aspecto de la solución.
 
 ### Monitor de Subastas
 Este componente almacena las subastas en progreso, y si se están llevando con normalidad. 
-En caso de una falla de un nodo de Servicio, el monitor nota que subastas en progreso que necesitan ser agendadas nuevamente. En el momento que un nodo de subastas se recupera, este consulta al para conocerlas, y continuar con el procesamiento.
+En caso de una falla de un nodo de Servicio de Subasta, el monitor nota que subastas en progreso que necesitan ser agendadas nuevamente, para que luego, cuando el nodo de Servicio de Subastas se recupere (o nazca una nueva instancia), este pueda conocer qué subastas deben ser recuperadas.
+
+#### Oportunidades de Mejora
+- El Monitor podría persistir el estado en otro cluster de estado (o el mismo), para evitar la pérdida de información en caso de falla. Hoy en día es un SPoF.
+- Esto permitiría escalarlo además, ya que no tendría estado.
+- Se necesitó el uso de estructuras para sincronizar el estado. Puede
 
 ### Estado de Subastas
 Los servicios de subasta delegan el estado a este componente, siendo un cluster que implementa el algoritmo de consenso Raft.
 Esto los hace eventualmente consistentes ante una partición en el cluster.
 
 ## Modelo de Concurrencia
-Se implementó la solución aprovechando el Event Loop de NodeJS, que se ajusta acordemente a las llamadas de entrada y salida constantes entre servicios y para los clientes. El procesamiento CPU es ligero.
+Se implementó la solución aprovechando el Event Loop de NodeJS, que se ajusta acordemente a las llamadas de entrada y salida constantes entre servicios y para los clientes. El procesamiento CPU Bound es ligero.
 
 ## How to run in (MacOS)
 
