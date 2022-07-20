@@ -1,7 +1,7 @@
 # Arquitecturas Concurrentes: Subastas
 
 ## Arquitectura
-![diagrama](diagrama.png)
+![diagrama](diagrama_arq.png)
 
 ### Servicio de Subastas
 Este componente es el WebClient de la aplicación, y es el único expuesto hacia hacia internet mediante un Ingress. Contiene los endpoints para crear subastas, registrar compradores, ofertar y cancelar una subasta, además de planificar el fin las subastas en progreso.
