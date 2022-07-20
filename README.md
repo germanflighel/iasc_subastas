@@ -4,33 +4,32 @@
 ![diagrama](diagrama.png)
 
 ### Servicio de Subastas
-Este componente es el entrypoint para el cliente, y es el único expuesto hacia afuera del cluster de Kubernetes. Contiene los endpoints para crear subastas, registrar compradores, ofertar y cancelar una subasta, además de agendar el fin las subastas en progreso.
+Este componente es el WebClient de la aplicación, y es el único expuesto hacia hacia internet mediante un Ingress. Contiene los endpoints para crear subastas, registrar compradores, ofertar y cancelar una subasta, además de planificar el fin las subastas en progreso.
 Se encarga además de generar las notificaciones a compradores cuando corresponda, oficiando de productor, a través de una cola de mensajes.
-Se comunica mediante sockets con el Monitor de Subastas, y reporta la creación de nuevas subastas a este
-El servicio escala horizontalmente, y se encuentra detrás de un balanceador de carga. 
+Se comunica mediante sockets con el Monitor de Subastas, y reporta la creación de nuevas subastas a este.
+El servicio escala horizontalmente, en base a consumo de cpu con un HorizontalPodAutoscaler, y se encuentra detrás de un balanceador de carga.
 
 #### Notificador
-El consumidor encargado de enviar las notificaciones a compradores, está abstraído en otro componente, lo que permite que también escale horizontalmente si se lo requiere.
-El uso de la cola de mensajes agrega resiliencia a este aspecto de la solución.
+El consumidor encargado de enviar las notificaciones a compradores, está abstraído en otro componente, lo que permite que también escale horizontalmente si se lo requiere a partir de la carga de eventos por notificar que podría recibir la queue.
+Se decidió incorporar este tipo de mensajería ya la misma naturaleza de la queue nos brinda resiliencia "out of the box". Si un evento de notificación fuera recibido y se fallara en su entrega, el consumer fallaría en dar el ack y pasado el visibility timeout se reintentaría el envío del mensaje. Además, el recurso externo nos desacopla del estado del consumidor, haciendo que el mensaje pueda encolarse aunque el servicio estuviera caido, para procesarse al momento de volver a estar disponible.
 
 ### Monitor de Subastas
-Este componente almacena las subastas en progreso, y si se están llevando con normalidad. 
-En caso de una falla de un nodo de Servicio de Subasta, el monitor nota que subastas en progreso que necesitan ser agendadas nuevamente, para que luego, cuando el nodo de Servicio de Subastas se recupere (o nazca una nueva instancia), este pueda conocer qué subastas deben ser recuperadas.
-
-#### Oportunidades de Mejora
-- El Monitor podría persistir el estado en otro cluster de estado (o el mismo), para evitar la pérdida de información en caso de falla. Hoy en día es un SPoF.
-- Esto permitiría escalarlo además, ya que no tendría estado.
-- Se necesitó el uso de estructuras para sincronizar el estado. Puede
+Este componente almacena referencias a las subastas en progreso, y si se están llevando con normalidad. 
+En caso de una falla de un nodo de Servicio de Subasta, el monitor detecta qué subastas necesitan ser replanificadas, para que luego, cuando algún nodo de Servicio de Subastas se recupere, este pueda conocer qué subastas deberá llevar.
 
 ### Estado de Subastas
 Los servicios de subasta delegan el estado a este componente, siendo un cluster que implementa el algoritmo de consenso Raft.
 Esto los hace eventualmente consistentes ante una partición en el cluster.
 
 ## Modelo de Concurrencia
-Se implementó la solución aprovechando el Event Loop de NodeJS, que se ajusta acordemente a las llamadas de entrada y salida constantes entre servicios y para los clientes. El procesamiento CPU Bound es ligero.
+Se implementó la solución aprovechando el Event Loop de NodeJS, que se ajusta acordemente a la carga I/O bound de la aplicación con comunicación constantes entre servicios y clientes. El procesamiento CPU Bound es ligero.
 
 ## Sobre el Teorema de CAP
 La arquitectura presentada se ubica en esquema AP. Analizando desde el Estado de Subastas, en caso de una partición de red, la implementación con Raft, perimte que las particiones generadas, elijan un nuevo líder, manteniendo la disponibilidad del sistema, aunque sacrificando una consistencia fuerte en todo el despliegue. La consistencia se recuperará una vez que finalice la partición, aceptando el estado provisto por el nuevo líder. 
+
+#### Oportunidades de Mejora
+- El Monitor podría persistir el estado en otro cluster de estado (o el mismo), para evitar la pérdida de información en caso de falla. Hoy en día es un SPoF.
+- Esto permitiría escalarlo además, ya que no tendría estado.
 
 ## How to run in (MacOS)
 
