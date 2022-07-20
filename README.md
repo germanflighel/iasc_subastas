@@ -32,6 +32,13 @@ Be sure to edit `/etc/hosts`, adding:
 127.0.0.1 subastas.com
 ```
 
+You will need to build the images for each component and move them to the cluster.
+Also, make sure you have the `ingress` addon enabled in your minikube cluster:
+
+```bash
+minikube addons enable ingress
+```
+
 1. Start a kuberneters cluster, `minikube start`
 2. `minikube tunnel`
 3. `cd k8s && kubectl apply -f .`
