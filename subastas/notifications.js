@@ -71,22 +71,24 @@ const notifyEndOfAuction = async (_auction) => {
   const endedAuction = {...auction, status: 'ENDED'}
   await post(AUCTIONS, {[_auction.id]: endedAuction})
 
-  const MessageBody = JSON.stringify({
-    endpoint: endedAuction.winningBid.buyer.ip + '/notification',
-    body: {
-      subject: 'WON_AUCTION',
-      endedAuction
-    },
-  })
+  if (auction.winningBid) {
+    const MessageBody = JSON.stringify({
+      endpoint: endedAuction.winningBid.buyer.ip + '/notification',
+      body: {
+        subject: 'WON_AUCTION',
+        endedAuction
+      },
+    })
 
-  const params = {
-    MessageBody,
-    MessageDeduplicationId: v4(),
-    MessageGroupId: auction.winningBid.buyer.ip,
-    QueueUrl: SQS_QUEUE_URL
-  };
+    const params = {
+      MessageBody,
+      MessageDeduplicationId: v4(),
+      MessageGroupId: auction.winningBid.buyer.ip,
+      QueueUrl: SQS_QUEUE_URL
+    };
 
-  sendMessage(params)
+    sendMessage(params)
+  }
 
   const buyers = await getDb('buyers')
 

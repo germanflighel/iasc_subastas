@@ -14,6 +14,9 @@ const io = new Server(httpServer, {
 const subastasMutex = new Mutex()
 const PORT = process.env.PORT || 3001
 
+/**
+ * We could add an extra event to clean ended auctions
+ */
 
 // { socket_id_1: [{id: 1, status: 'STATUS'}] }
 const auctions = []
@@ -25,7 +28,7 @@ io.on("connection", (socket) => {
   })
 
   /*
-   *  This looks likes it has a horrible race condition to me. 
+   *  This looked like it had a horrible race condition to me. 
    */
   socket.on('get-orphan-auctions', async (_, callback) => {
     await subastasMutex.runExclusive(async () => {

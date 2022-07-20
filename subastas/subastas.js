@@ -57,12 +57,16 @@ app.post('/bids', async function(req, res) {
 
   const auction = await getKey(AUCTIONS, bid.auctionId)
 
-  if (auction.winningPrice >= bid.price) {
-    return res.status(400).json({'status': 'bid is lower than winning offer'})
-  }
-
   if (auction.status == 'CANCELED' || auction.status == 'ENDED') {
     return res.status(400).json({'status': 'auction no longer accepts bids'})
+  }
+  
+  if (auction.startingPrice > bid.price) {
+    return res.status(400).json({'status': 'bid is lower than starting price'})
+  }
+
+  if (auction.winningPrice >= bid.price) {
+    return res.status(400).json({'status': 'bid is lower than winning offer'})
   }
 
   const updatedAuction = {...auction, winningBid: bid, winningPrice: bid.price}
@@ -82,6 +86,10 @@ app.post('/auction/:id/cancel', async function(req, res) {
   const auctionId = req.params.id
 
   const auction = await getKey(AUCTIONS, auctionId)
+
+  if (auction.status == 'CANCELED' || auction.status == 'ENDED') {
+    return res.status(400).json({'status': `auction is already ${auction.status.toLowerCase()}`})
+  }
   
   const updatedAuction = {...auction, status: 'CANCELED'}
   
@@ -98,7 +106,9 @@ app.post('/auction/:id/cancel', async function(req, res) {
 
 const scheduleEndOfAuction = (lostAuction) => {
   const newEndTime = (lostAuction.startTime + lostAuction.duration * 60 * 1000) - Date.now()
-  console.log(`Scheduling lost auction from ${lostAuction.startTime} to ${newEndTime}`)
+  if (newEndTime > 0) { 
+    console.log(`Scheduling lost auction from ${lostAuction.startTime} to ${newEndTime}`)
+  }
   setTimeout(() => notifyEndOfAuction(lostAuction), newEndTime + EXTRA_TIME)
 }
 
