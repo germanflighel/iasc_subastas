@@ -29,6 +29,9 @@ Esto los hace eventualmente consistentes ante una partición en el cluster.
 ## Modelo de Concurrencia
 Se implementó la solución aprovechando el Event Loop de NodeJS, que se ajusta acordemente a las llamadas de entrada y salida constantes entre servicios y para los clientes. El procesamiento CPU Bound es ligero.
 
+## Sobre el Teorema de CAP
+La arquitectura presentada se ubica en esquema AP. Analizando desde el Estado de Subastas, en caso de una partición de red, la implementación con Raft, perimte que las particiones generadas, elijan un nuevo líder, manteniendo la disponibilidad del sistema, aunque sacrificando una consistencia fuerte en todo el despliegue. La consistencia se recuperará una vez que finalice la partición, aceptando el estado provisto por el nuevo líder. 
+
 ## How to run in (MacOS)
 
 Be sure to edit `/etc/hosts`, adding:
